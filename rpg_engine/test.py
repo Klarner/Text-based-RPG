@@ -90,6 +90,9 @@ class ChangeEquipable(Logic):
                     print("You've equipped %s" % itemFromInventory.name)
                     return None
         except:
+            if itemType is None:
+                print("No such item found in inventory.")
+                return "No such item found in inventory."
             if itemType.isEquipable:
                 for i in game.player.equipables:
                     slot = i
