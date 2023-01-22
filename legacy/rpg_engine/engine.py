@@ -16,12 +16,6 @@ class Game:
     
     def add_item_type(self, item:Type[Item]) -> Union[str, None]:
         self.itemTypeList.append(item)
-        # for i in self.itemTypeList:
-        #     if i.id == item.id:
-        #         return "This item is already in the item type lists."
-        #     else:
-        #         self.itemTypeList.append(item)
-        #         return None
 
     def get_item_type(self, item:str) -> Union[Type[Item], None]:
         for i in self.itemTypeList:
@@ -68,9 +62,6 @@ class TextProcessor():
                 if z == command:
                     i.execute(arguments)
                     return None
-            # if i.command == command:
-            #     i.execute(arguments)
-            #     return None
         return True
     
     def process(self, text: str) -> None:
