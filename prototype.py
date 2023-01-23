@@ -16,10 +16,10 @@ class Game:
 
     def run(self) -> None:
         while True:
+            self.describe()
             if not self.check_player_alive():
                 break
-
-            self.describe()
+            
             userInput = str(input("What would you like to do: ")).lower()
 
             match userInput:
@@ -50,7 +50,7 @@ class Game:
             return None
     
     def describe(self) -> None:
-        self.player.currentLocation.describe()
+        self.player.currentLocation.describe(self.player)
     
     def check_player_alive(self) -> bool:
         if self.player.get_health() <= 0:
@@ -168,41 +168,41 @@ class EnemyQuestion(Enemy):
         self.attack(player)
     
     def get_health(self) -> Union[float, int]:
-        return self.health
+        return self.currentHealth
 
     def check_alive(self) -> bool:
-        if self.get_health() < 0:
-            return True
-        return False
+        if self.get_health() <= 0:
+            return False
+        return True
 
     def take_damage(self, amount:Union[float, int]) -> None:
-        self.health -= amount
+        self.currentHealth -= amount
     
     # The attack should be prompting a question.
     def attack(self, player:Type[Player]) -> None:
         while True:
             if not self.check_alive():
                 break
-            # This if is for debug purposes to check if parent while loop that checks if the player is alive.
-            if player.get_health() < 0:
-                break
-            self.questionHandler.prompt_question()
-            answer = input("\nWhat's your answer? ")
 
-            if type(answer) is float:
-                answer = float(answer)
-            elif type(answer) is int:
-                answer = int(answer)
-            elif type(answer) is bool:
-                answer = bool(answer)
-            elif type(answer) is str:
-                answer = str(answer)
+            # This if is for debug purposes to check if parent while loop that checks if the player is alive.
+            if player.get_health() <= 0:
+                print("Game over!")
+                break
+
+            self.questionHandler.set_current_question_random()
+            print()
+            self.questionHandler.prompt_question()
+            answer = str(input("\nWhat's your answer? "))
             
             if self.questionHandler.check_answer(answer):
                 # right
+                print()
+                print("Correct!")
+                print()
                 self.take_damage(1)
             else:
                 # wrong
+                print()
                 print("Wrong!")
                 player.take_damage(1)
 
@@ -227,6 +227,12 @@ class QuestionHandler:
         if answer == self.currentQuestion.get_answer():
             return True
         return False
+    
+    def add_question(self, question:Type[Question]) -> None:
+        self.questions.append(question)
+    
+    def add_questions(self, question:list[Type[Question]]) -> None:
+        self.questions.extend(question)
 
 class Question:
     def __init__(self, question:str, answer:Any) -> None:
@@ -258,10 +264,12 @@ class Location:
     def activate(self, player:Type[Player]) -> None:
         enemies:list[Type[Enemy]] = []
         for i in self.entities:
-            if type(i) is Type[Enemy]:
+            if type(i) is EnemyQuestion:
                 enemies.append(i)
         
         for i in enemies:
+            print()
+            print("{} is going to attack you! Answer this question to attack this enemy back!".format(i.name))
             i.behavior(player)
 
     def describe(self, player:Type[Player]) -> None:
