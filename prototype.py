@@ -70,6 +70,57 @@ class Player:
         self.currentHealth:Union[float, int] = health
         self.maxHealth:Union[float, int] = health
         self.currentLocation:Type[Location] = currentLocation
+        self.inventory:list[Type[Item]] = []
+
+    def add_item_to_inventory(self, item:Type[Item]):
+        self.inventory.append(item)
+    
+    def add_items_to_inventory(self, items:list[Type[Item]]):
+        self.inventory.extend(items)
+    
+    def get_item_name(self, itemName:str) -> Union[Type[Item], None]:
+        for i in self.inventory:
+            if i.name == itemName:
+                return i
+        return None
+    
+    def get_item_id(self, itemID:int) -> Union[Type[Item], None]:
+        for i in self.inventory:
+            if i.id == itemID:
+                return i
+        return None
+
+    # This is to make sure that you're getting the referenced item instead of a softcopy.
+    def get_item_name_index(self, itemName:str) -> Union[int, None]:
+        item = self.get_item_name(itemName)
+        if item:
+            return self.inventory.index(item)
+        return None
+    
+    def get_item_id_index(self, itemID:int) -> Union[int, None]:
+        item = self.get_item_id(itemID)
+        if item:
+            return self.inventory.index(item)
+        return None
+    
+    def check_if_item_exist(self, item:Type[Item]) -> bool:
+        for i in self.inventory:
+            if i.id == item.id:
+                return True
+        return False
+    
+    def check_if_item_exist_name(self, itemName:str) -> bool:
+        for i in self.inventory:
+            if i.name == itemName:
+                return True
+        return False
+    
+    def check_if_item_exist_id(self, itemID:int) -> bool:
+        for i in self.inventory:
+            if i.id == itemID:
+                return True
+        return False
+
 
     def difference_health(self, amount:Union[float, int]) -> None:
         if self.currentHealth - amount < 0:
@@ -110,11 +161,9 @@ class Player:
 #
 
 class Item:
-    def __init__(self, id:int, name:str, amount:int, maxStack:int) -> None:
+    def __init__(self, id:int, name:str) -> None:
         self.id:int = id
         self.name:str = name
-        self.amount:int = amount
-        self.maxStack:int = maxStack
     
     def use(self) -> None:
         pass
@@ -129,16 +178,96 @@ class Entity:
     def behavior(self) -> None:
         pass
 
+#
+
 class NPC(Entity):
     def __init__(self, id: int, name: str, occupation:str) -> None:
         self.occupation = occupation
+        self.quest:Type[Quest] = None
+        self.defaultDialogue:list[str] = []
         super().__init__(id, name)
     
-    def behavior(self) -> None:
-        return super().behavior()
+    def set_quest(self, quest:Type[Quest]) -> None:
+        self.quest = quest
+
+    def behavior(self, player:Type[Player]) -> None:
+        self.talk(player)
     
-    def talk(self) -> None:
+    def talk(self, player:Type[Player]) -> None:
+        if self.quest.check_conditions(player=player):
+            if not self.quest.done:
+                self.quest.set_done(isDone=True)
+                if self.quest.behavior:
+                    self.quest.reward_behavior(player=player)
+                else:
+                    self.quest.reward_item(player=player)
+            
+            # do default dialogue
+            for i in self.defaultDialogue:
+                print(i + "\n\n")
+        else:
+            self.quest.prompt_quest_dialogues()
+
+class Quest:
+    def __init__(self, questItem:Type[QuestItem] = None, rewardItem:Type[Item] = None, rewardQuantity:int = 1) -> None:
+        self.questItem:Type[QuestItem] = questItem
+        self.rewardItem:Type[Item] = rewardItem
+        self.rewardQuantity:int = rewardQuantity
+        self.done:bool = False
+        self.behavior:bool = False
+        self.questDialogue:list[str] = []
+
+    def set_done(self, isDone:bool) -> None:
+        self.done = isDone
+    
+    def set_behavior(self, isBehavior:bool) -> None:
+        self.behavior = isBehavior
+    
+    def set_quest_item(self, questItem:Type[QuestItem]) -> None:
+        self.questItem = questItem
+    
+    def set_reward_item(self, rewardItem:Type[Item]) -> None:
+        self.reward_item = rewardItem
+    
+    def set_reward_quantity(self, rewardQuantity:int) -> None:
+        self.rewardQuantity = rewardQuantity
+
+    def check_conditions(self, player:Type[Player]) -> None:
+        if player.check_if_item_exist(item=self.questItem):
+            return True
+        return False
+
+    def add_quest_dialogue(self, message:str) -> None:
+        self.questDialogue.append(message)
+    
+    def add_quest_dialogues(self, messages:list[str]) -> None:
+        self.questDialogue.extend(messages)
+    
+    def set_quest_dialogues(self, messages:list[str]) -> None:
+        self.questDialogue = messages
+    
+    def prompt_quest_dialogues(self) -> None:
+        for i in self.questDialogue:
+            print(i + "\n\n")
+
+    def reward_item(self, player:Type[Player]) -> None:
+        if self.rewardQuantity > 1:
+            player.add_item_to_inventory(self.rewardItem)
+        else:
+            for _ in range(self.rewardQuantity):
+                player.add_item_to_inventory(self.rewardItem)
+
+    def reward_behavior(self, player:Type[Player]) -> None:
         pass
+
+class QuestItem(Item):
+    def __init__(self, id: int, name: str) -> None:
+        super().__init__(id, name)
+    
+    def use(self) -> None:
+        return super().use()
+
+#
 
 class Enemy(Entity):
     def __init__(self, id: int, name: str, health:Union[float, int]) -> None:
