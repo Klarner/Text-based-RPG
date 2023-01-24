@@ -22,11 +22,14 @@ class Game:
             
             userInput = str(input("What would you like to do: ")).lower()
 
-            match userInput:
-                case "quit":
-                    break
-                case other:
-                    self.process(userInput)
+            try:
+                match userInput:
+                    case "quit":
+                        break
+                    case other:
+                        self.process(userInput)
+            except:
+                print("An error has occured. But you can still play the game.")
 
     def process(self, userInput:str) -> None:
         arguments = userInput.split(" ")
@@ -41,9 +44,9 @@ class Game:
             return None
 
         for i in self.commands:
-            for _, (j, x) in enumerate(i.items):
+            for _, (j, x) in enumerate(i.items()):
                 if commandCaller == j:
-                    x.execute()
+                    x.execute(player=self.player, arguments=arguments)
                     return None
         else:
             print("Command not found {}".format(commandCaller))
@@ -58,7 +61,7 @@ class Game:
         return True
 
 class Logic:
-    def execute(self) -> None:
+    def execute(self, player:Type[Player], arguments:list[str]) -> None:
         pass
 
 #
@@ -78,6 +81,10 @@ class Player:
     def add_items_to_inventory(self, items:list[Type[Item]]):
         self.inventory.extend(items)
     
+    def remove_item_to_inventory(self, item:Type[Item]):
+        itemIndex = self.get_item_id_index(item.id)
+        self.inventory.pop(itemIndex)
+
     def get_item_name(self, itemName:str) -> Union[Type[Item], None]:
         for i in self.inventory:
             if i.name == itemName:
@@ -165,7 +172,7 @@ class Item:
         self.id:int = id
         self.name:str = name
     
-    def use(self) -> None:
+    def use(self, player: Type[Player]) -> None:
         pass
 
 #
@@ -402,31 +409,25 @@ class Location:
             i.behavior(player)
 
     def describe(self, player:Type[Player]) -> None:
-        currentEntities:dict[str, Union[int, str]] = {}
+        currentEntities:list[str] = []
         for i in self.entities:
-            if i.name in currentEntities:
-                currentEntities[i.name] += 1
+            if type(i) is NPC:
+                currentEntities.update({i.name:"a/an {} by the named".format(i.occupation)})
             else:
-                if type(i) is NPC:
-                    currentEntities.update({i.name:"a/an {} by the named".format(i.occupation)})
-                else:
-                    currentEntities.update({i.name:1})
+                currentEntities.update({i.name:1})
         
-        currentItems:dict[str, int] = {}
+        currentItems:list[str] = []
         for i in self.items:
-            if i.name in currentItems:
-                currentItems[i.name] += 1
-            else:
-                currentItems.update({i.name:1})
+            currentItems.append(i.name)
         
-        entitiesDescribe:str = ", ".join("{} {}".format(entityCount, entityName) for _, (entityName, entityCount) in enumerate(currentEntities.items()))
-        itemsDescribe:str = ", ".join("{} {}".format(itemCount, itemName) for _, (itemName, itemCount) in enumerate(currentItems.items()))
+        entitiesDescribe:str = ", ".join(currentEntities)#("{} {}".format(entityCount, entityName) for _, (entityName, entityCount) in enumerate(currentEntities.items()))
+        itemsDescribe:str = ", ".join(currentItems)#("{} {}".format(itemCount, itemName) for _, (itemName, itemCount) in enumerate(currentItems.items()))
         generalDescribe:str = self.description
 
-        if currentEntities != {}:
+        if currentEntities != []:
             generalDescribe += ".\nEntities being {}".format(entitiesDescribe)
-        if currentItems != {}:
-            generalDescribe += ".\nThere are {}.".format(itemsDescribe)
+        if currentItems != []:
+            generalDescribe += ".\nThere is {}.".format(itemsDescribe)
         
         print(generalDescribe)
 
