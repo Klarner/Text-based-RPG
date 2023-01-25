@@ -16,7 +16,7 @@ class Game:
 
     def run(self) -> None:
         while True:
-            self.describe()
+            # self.describe()
             if not self.check_player_alive():
                 break
             
@@ -53,6 +53,7 @@ class Game:
             return None
     
     def describe(self) -> None:
+        # print(self.player.currentLocation.entities)
         self.player.currentLocation.describe(self.player)
     
     def check_player_alive(self) -> bool:
@@ -155,7 +156,8 @@ class Player:
         newLocation = self.currentLocation.get_location(direction=direction)
         directions = [self.currentLocation.north, self.currentLocation.east, self.currentLocation.south, self.currentLocation.west]
         for i in directions:
-            if i != None:
+            directions = ["north", "east", "south", "west"]
+            if i != None and direction in directions:
                 if newLocation.id == i.id:
                     self.currentLocation = i
                     print("You've gone to {}".format(self.currentLocation.name))
@@ -175,6 +177,12 @@ class Item:
     def use(self, player: Type[Player]) -> None:
         pass
 
+    def get_id(self) -> int:
+        return self.id
+    
+    def get_name(self) -> str:
+        return self.name
+
 #
 
 class Entity:
@@ -192,8 +200,21 @@ class NPC(Entity):
         self.occupation = occupation
         self.quest:Type[Quest] = None
         self.defaultDialogue:list[str] = []
+        self.thanksDialogue:str = ""
         super().__init__(id, name)
     
+    def add_dialogue(self, message:str) -> None:
+        self.defaultDialogue.append(message)
+    
+    def add_dialogues(self, messages:list[str]) -> None:
+        self.defaultDialogue.extend(messages)
+    
+    def set_dialogue(self, messages:list[str]) -> None:
+        self.defaultDialogue = messages
+    
+    def set_thanks_dialogue(self, message:str) -> None:
+        self.thanksDialogue = message
+
     def set_quest(self, quest:Type[Quest]) -> None:
         self.quest = quest
 
@@ -208,10 +229,13 @@ class NPC(Entity):
                     self.quest.reward_behavior(player=player)
                 else:
                     self.quest.reward_item(player=player)
+                player.remove_item_to_inventory(item=self.quest.questItem)
+                print(self.thanksDialogue)
+                print()
             
             # do default dialogue
             for i in self.defaultDialogue:
-                print(i + "\n\n")
+                print(i + "\n")
         else:
             self.quest.prompt_quest_dialogues()
 
@@ -268,6 +292,7 @@ class Quest:
         pass
 
 class QuestItem(Item):
+    # __slots__ = ['id', 'name']
     def __init__(self, id: int, name: str) -> None:
         super().__init__(id, name)
     
@@ -388,7 +413,7 @@ class Location:
         self.id:int = id
         self.name:str = name
         self.description:str = description
-        self.items:list[Type[items]] = items
+        self.items:list[Type[Item]] = items
         self.entities:list[Type[Entity]] = entities
         self.north:Type[Location] = north
         self.east:Type[Location] = east
@@ -409,22 +434,20 @@ class Location:
             i.behavior(player)
 
     def describe(self, player:Type[Player]) -> None:
-        currentEntities:list[str] = []
+        currentEntities:dict[str, str] = {}
         for i in self.entities:
             if type(i) is NPC:
                 currentEntities.update({i.name:"a/an {} by the named".format(i.occupation)})
-            else:
-                currentEntities.update({i.name:1})
         
         currentItems:list[str] = []
         for i in self.items:
             currentItems.append(i.name)
         
-        entitiesDescribe:str = ", ".join(currentEntities)#("{} {}".format(entityCount, entityName) for _, (entityName, entityCount) in enumerate(currentEntities.items()))
+        entitiesDescribe:str = ", ".join("{} {}".format(entityCount, entityName) for _, (entityName, entityCount) in enumerate(currentEntities.items()))
         itemsDescribe:str = ", ".join(currentItems)#("{} {}".format(itemCount, itemName) for _, (itemName, itemCount) in enumerate(currentItems.items()))
         generalDescribe:str = self.description
 
-        if currentEntities != []:
+        if currentEntities != {}:
             generalDescribe += ".\nEntities being {}".format(entitiesDescribe)
         if currentItems != []:
             generalDescribe += ".\nThere is {}.".format(itemsDescribe)
