@@ -55,6 +55,12 @@ class Game:
     def describe(self) -> None:
         # print(self.player.currentLocation.entities)
         self.player.currentLocation.describe(self.player)
+        direction = ["north", "east", "south", "west"]
+        print("places to go...")
+        for i in direction:
+            loc:Type[Location] = self.player.currentLocation.get_location(i)
+            if loc != None:
+                print("{}: {}".format(i, loc.get_name()))
     
     def check_player_alive(self) -> bool:
         if self.player.get_health() <= 0:
@@ -223,7 +229,7 @@ class NPC(Entity):
     
     def talk(self, player:Type[Player]) -> None:
         if self.quest.check_conditions(player=player):
-            if not self.quest.done:
+            if not self.quest.get_done():
                 self.quest.set_done(isDone=True)
                 if self.quest.behavior:
                     self.quest.reward_behavior(player=player)
@@ -232,12 +238,12 @@ class NPC(Entity):
                 player.remove_item_to_inventory(item=self.quest.questItem)
                 print(self.thanksDialogue)
                 print()
-            
-            # do default dialogue
-            for i in self.defaultDialogue:
-                print(i + "\n")
         else:
-            self.quest.prompt_quest_dialogues()
+            if not self.quest.get_done():
+                self.quest.prompt_quest_dialogues()
+            else:
+                for i in self.defaultDialogue:
+                    print(i + "\n")
 
 class Quest:
     def __init__(self, questItem:Type[QuestItem] = None, rewardItem:Type[Item] = None, rewardQuantity:int = 1) -> None:
@@ -263,8 +269,12 @@ class Quest:
     def set_reward_quantity(self, rewardQuantity:int) -> None:
         self.rewardQuantity = rewardQuantity
 
+    def get_done(self) -> bool:
+        return self.done
+
     def check_conditions(self, player:Type[Player]) -> None:
         if player.check_if_item_exist(item=self.questItem):
+            # self.set_done(True)
             return True
         return False
 
@@ -323,9 +333,11 @@ class Enemy(Entity):
 class EnemyQuestion(Enemy):
     def __init__(self, id: int, name: str, health: Union[float, int], questionHandler:Type[QuestionHandler]) -> None:
         self.questionHandler:Type[QuestionHandler] = questionHandler
+        self.dialogue:list[str] = []
         super().__init__(id, name, health)
     
     def behavior(self, player:Type[Player]) -> None:
+        self.prompt_dialogue()
         self.attack(player)
     
     def get_health(self) -> Union[float, int]:
@@ -339,6 +351,24 @@ class EnemyQuestion(Enemy):
     def take_damage(self, amount:Union[float, int]) -> None:
         self.currentHealth -= amount
     
+    #
+
+    def get_dialogue(self) -> list[str]:
+        return self.dialogue
+    
+    def set_dialogue(self, dialogue:list[str]) -> None:
+        self.dialogue = dialogue
+    
+    def add_dialogue(self, message:str) -> None:
+        self.dialogue.append(message)
+    
+    def add_dialogues(self, messages:list[str]) -> None:
+        self.dialogue.extend(messages)
+    
+    def prompt_dialogue(self) -> None:
+        for i in self.get_dialogue():
+            print(i + '\n')
+
     # The attack should be prompting a question.
     def attack(self, player:Type[Player]) -> None:
         while True:
@@ -507,6 +537,9 @@ class Location:
                 return self.get_south()
             case "west":
                 return self.get_west()
+
+    def get_name(self) -> str:
+        return self.name
 
     def add_item_on_ground(self, item:Type[Item]) -> None:
         self.items.append(item)
