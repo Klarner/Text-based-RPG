@@ -20,7 +20,6 @@ class UseLogic(Logic):
     
     def execute(self, player: Type[Player], arguments: list[str]) -> None:
         itemIndex:int = player.get_item_name_index(itemName=" ".join(arguments))
-        # print(itemIndex)
         if itemIndex != None:
             player.inventory[itemIndex].use(player)
             return None

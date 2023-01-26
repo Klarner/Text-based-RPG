@@ -81,6 +81,12 @@ class Player:
         self.maxHealth:Union[float, int] = health
         self.currentLocation:Type[Location] = currentLocation
         self.inventory:list[Type[Item]] = []
+    
+    def set_name(self, name:str) -> None:
+        self.name = name
+
+    def get_name(self) -> str:
+        return self.name
 
     def add_item_to_inventory(self, item:Type[Item]):
         self.inventory.append(item)
@@ -306,8 +312,8 @@ class QuestItem(Item):
     def __init__(self, id: int, name: str) -> None:
         super().__init__(id, name)
     
-    def use(self) -> None:
-        return super().use()
+    def use(self, player:Type[Player]) -> None:
+        return super().use(player)
 
 #
 
