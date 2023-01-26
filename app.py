@@ -1,4 +1,4 @@
-from prototype import Location, Player, Game, Item, EnemyQuestion, QuestionHandler, Question, Logic, NPC, Quest, QuestItem
+from rpg_lib import Location, Player, Game, Item, EnemyQuestion, QuestionHandler, Question, Logic, NPC, Quest, QuestItem
 from typing import Type
 
 firstLocation = Location(id=1, name="test location 1", description="This is a cool place to test stuff.", items=[], entities=[])
