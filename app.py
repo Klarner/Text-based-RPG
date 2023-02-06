@@ -13,6 +13,7 @@ class GoLogic(Logic):
     
     def execute(self, player: Type[Player], arguments: list[str]) -> None:
         player.change_location(direction=arguments[0])
+        player.currentLocation.activate(player)
 
 class UseLogic(Logic):
     def __init__(self) -> None:

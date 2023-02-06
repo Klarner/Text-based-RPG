@@ -22,14 +22,14 @@ class Game:
             
             userInput = str(input("What would you like to do: ")).lower()
 
-            try:
-                match userInput:
-                    case "quit":
-                        break
-                    case other:
-                        self.process(userInput)
-            except:
-                print("An error has occured. But you can still play the game.")
+            # try:
+            match userInput:
+                case "quit":
+                    break
+                case other:
+                    self.process(userInput)
+            # except:
+            #     print("An error has occured. But you can still play the game.")
 
     def process(self, userInput:str) -> None:
         arguments = userInput.split(" ")
@@ -492,8 +492,8 @@ class Location:
         
         print(generalDescribe)
 
-        if self.entities != []:
-            self.activate(player)
+        # if self.entities != []:
+        #     self.activate(player)
 
     #
 
