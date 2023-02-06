@@ -385,6 +385,8 @@ class EnemyQuestion(Enemy):
             if player.get_health() <= 0:
                 print("Game over!")
                 break
+            
+            print("{} is going to attack you! Answer this question to attack this enemy back!".format(self.name))
 
             self.questionHandler.set_current_question_random()
             print()
@@ -466,7 +468,7 @@ class Location:
         
         for i in enemies:
             print()
-            print("{} is going to attack you! Answer this question to attack this enemy back!".format(i.name))
+            # print("{} is going to attack you! Answer this question to attack this enemy back!".format(i.name))
             i.behavior(player)
 
     def describe(self, player:Type[Player]) -> None:
